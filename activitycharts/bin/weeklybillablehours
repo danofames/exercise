@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+from datetime import datetime
+import json
+import sys
+
+def main():
+
+    weeks = []
+    week_data = {}
+    entries = json.loads(sys.stdin.read())
+
+    for entry in entries:
+        day_entry = entry['day_entry']
+        if not day_entry['is_billed']:
+            continue
+        day_entry_dt = datetime.strptime(day_entry['created_at'], '%Y-%m-%dT%H:%M:%SZ')
+        week_of_year = day_entry_dt.strftime('%W')
+        if not week_data.has_key(week_of_year):
+            week_data[week_of_year] = {
+                'start_date': datetime.strptime(
+                    '%s1%s' % (day_entry_dt.year, week_of_year),
+                    '%Y%w%W'
+                ),
+                'total_hours': 0
+            }
+            weeks.append(week_of_year)
+        week_data[week_of_year]['total_hours'] += day_entry['hours']
+    for week in weeks:
+        sys.stdout.write("%s\t%s\n" % (
+            week_data[week]['start_date'].strftime('%Y-%m-%d'),
+            week_data[week]['total_hours']
+        ))
+
+    return 0
+
+if __name__ == '__main__':
+    sys.exit(main())
